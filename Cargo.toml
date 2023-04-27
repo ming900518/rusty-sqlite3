@@ -1,0 +1,25 @@
+[package]
+name = "rusty-sqlite3"
+description = "Experimental project for using SQLx with SQLite3 as an npm module."
+repository = "https://github.com/ming900518/rusty-sqlite3"
+version = "0.1.0"
+authors = ["Ming Chang <mail@mingchang.tw>"]
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "*"
+wasm-bindgen-futures = "*"
+serde = { version = "*", features = ["derive"]}
+serde-wasm-bindgen = "*"
+time = { version = "*", features = ["serde-human-readable", "macros", "wasm-bindgen"]}
+tokio = { version = "*", features = ["macros", "rt"]}
+sqlx = { version = "*", features = ["runtime-tokio-rustls", "time", "sqlite"]}
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+opt-level = "s"
