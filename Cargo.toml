@@ -1,8 +1,10 @@
 [package]
 name = "rusty-sqlite3"
-version = "0.2.0"
+version = "0.3.0"
 license = "ISC"
-edition = "2018"
+edition = "2021"
+authors = ["Ming Chang <mail@mingchang.tw>"]
+homepage = "https://github.com/ming900518/rusty-sqlite3"
 exclude = ["index.node"]
 
 [lib]

@@ -45,7 +45,7 @@ fn execute(mut context: FunctionContext) -> JsResult<JsPromise> {
     let channel = context.channel();
     let (deferred, promise) = context.promise();
     let Ok(sql_js) = context.argument::<JsString>(0) else {
-        return context.throw_error("No SQL found.")
+        return context.throw_error("No SQL found.");
     };
     let sql = sql_js.value(&mut context);
     let rt = RUNTIME.get().unwrap();
@@ -54,21 +54,25 @@ fn execute(mut context: FunctionContext) -> JsResult<JsPromise> {
         deferred.settle_with(&channel, move |mut context| match query {
             Ok(results) => {
                 let array = context.empty_array();
-                results
-                    .into_iter()
-                    .enumerate()
-                    .for_each(|(_result_index, row)| {
-                        let column_len = row.columns().len();
-                        let object = context.empty_object();
-                        (0..column_len).for_each(|index| {
-                            let column = context.string(row.column(index).name());
-                            let row_value: String = row.try_get_unchecked(index).unwrap();
-                            let field = context.string(row_value);
-                            object.set(&mut context, column, field).unwrap();
-                        });
-                        let array_len = array.len(&mut context);
-                        array.set(&mut context, array_len, object).unwrap();
+                results.into_iter().for_each(|row| {
+                    let column_len = row.columns().len();
+                    let object = context.empty_object();
+                    (0..column_len).for_each(|index| {
+                        let column = context.string(row.column(index).name());
+                        let field = if let Ok(i32_value) = row.try_get::<i32, usize>(index) {
+                            context.number(i32_value).as_value(&mut context)
+                        } else if let Ok(f64_value) = row.try_get::<f64, usize>(index) {
+                            context.number(f64_value).as_value(&mut context)
+                        } else if let Ok(string_value) = row.try_get::<&str, usize>(index) {
+                            context.string(string_value).as_value(&mut context)
+                        } else {
+                            context.null().as_value(&mut context)
+                        };
+                        object.set(&mut context, column, field).unwrap();
                     });
+                    let array_len = array.len(&mut context);
+                    array.set(&mut context, array_len, object).unwrap();
+                });
                 Ok(array)
             }
             Err(error) => context.throw_error(error.to_string()),

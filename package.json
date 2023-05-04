@@ -1,6 +1,6 @@
 {
     "name": "rusty-sqlite3",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "",
     "main": "index.node",
     "scripts": {
@@ -10,7 +10,8 @@
         "install": "npm run build-release",
         "test": "cargo test"
     },
-    "author": "Ming Chang <mail@mingchang.tw>",
+    "author": "Ming Chang <mail@mingchang.tw> (https://mingchang.tw)",
+    "homepage": "https://github.com/ming900518/rusty-sqlite3",
     "license": "ISC",
     "devDependencies": {
         "cargo-cp-artifact": "^0.1.8"
