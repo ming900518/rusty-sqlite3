@@ -1,2 +1,3 @@
 # rusty-sqlite3
-Experimental project for using SQLx with SQLite3 as an npm module.
+
+A SQLite3 Client build with Rust Library [SQLx](https://github.com/launchbadge/sqlx) and [Neon](https://neon-bindings.com/).
