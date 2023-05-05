@@ -54,16 +54,44 @@ fn execute(mut context: FunctionContext) -> JsResult<JsPromise> {
     if CONNECTION.get().is_none() {
         return context.throw_error("Connection to database has not been initalized, please call connect() method before execute.");
     };
+    let Some(rt) = RUNTIME.get() else {
+        return context.throw_error(
+            "Could not get the Tokio runtime, which is required for executing SQL.",
+        );
+    };
     let channel = context.channel();
     let (deferred, promise) = context.promise();
     let Ok(sql_js) = context.argument::<JsString>(0) else {
         return context.throw_error("No SQL found.");
     };
+    let args_js_option = context.argument_opt(1);
     let sql = sql_js.value(&mut context);
-    let rt = RUNTIME.get().unwrap();
+    let args = if let Some(args_js) = args_js_option {
+        let Ok(args_js_array) = args_js.downcast::<JsArray, _>(&mut context) else {
+             return context.throw_error("Unable to parse arguments.")
+        };
+        let vec = args_js_array
+            .to_vec(&mut context)
+            .unwrap()
+            .into_iter()
+            .map(|js_value| {
+                let js_string = js_value.to_string(&mut context).unwrap();
+                js_string.value(&mut context)
+            })
+            .collect::<Vec<String>>();
+        Some(vec)
+    } else {
+        None
+    };
     rt.spawn(async move {
-        let query = query(&sql).fetch_all(CONNECTION.get().unwrap()).await;
-        deferred.settle_with(&channel, move |mut context| match query {
+        let mut query = query(&sql);
+        if let Some(args_vec) = args {
+            for arg in args_vec {
+                query = query.bind(arg);
+            }
+        }
+        let execute = query.fetch_all(CONNECTION.get().unwrap()).await;
+        deferred.settle_with(&channel, move |mut context| match execute {
             Ok(results) => {
                 let array = context.empty_array();
                 results.into_iter().for_each(|row| {
@@ -79,10 +107,20 @@ fn execute(mut context: FunctionContext) -> JsResult<JsPromise> {
                             } else {
                                 context.null().as_value(&mut context)
                             }
-                        } else if let Ok(f64_value) = row.try_get::<f64, usize>(index) {
-                            context.number(f64_value).as_value(&mut context)
+                        } else if let Ok(option_f64_value) =
+                            row.try_get::<Option<f64>, usize>(index)
+                        {
+                            if let Some(f64_value) = option_f64_value {
+                                context.number(f64_value).as_value(&mut context)
+                            } else {
+                                context.null().as_value(&mut context)
+                            }
                         } else if let Ok(string_value) = row.try_get::<&str, usize>(index) {
-                            context.string(string_value).as_value(&mut context)
+                            if string_value != "null" {
+                                context.string(string_value).as_value(&mut context)
+                            } else {
+                                context.null().as_value(&mut context)
+                            }
                         } else {
                             context.undefined().as_value(&mut context)
                         };
