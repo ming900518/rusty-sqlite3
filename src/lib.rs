@@ -10,22 +10,31 @@ static CONNECTION: OnceCell<SqlitePool> = OnceCell::new();
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("connect", connect).unwrap();
     cx.export_function("execute", execute).unwrap();
-    Ok(())
-}
-
-fn runtime<'a, C: Context<'a>>(context: &mut C) -> NeonResult<&'static Runtime> {
-    RUNTIME.get_or_try_init(|| Runtime::new().or_else(|err| context.throw_error(err.to_string())))
+    if let Err(err) =
+        RUNTIME.get_or_try_init(|| Runtime::new().or_else(|err| cx.throw_error(err.to_string())))
+    {
+        Err(err)
+    } else {
+        Ok(())
+    }
 }
 
 fn connect(mut context: FunctionContext) -> JsResult<JsPromise> {
-    let rt = runtime(&mut context).unwrap();
+    if CONNECTION.get().is_some() {
+        return context.throw_error("Connection to database has already been initalized, could not initalize connection twice.");
+    };
+    if RUNTIME.get().is_none() {
+        return context.throw_error(
+            "Could not get the Tokio runtime, which is required for connecting to database.",
+        );
+    };
     let Ok(connection_link_js) = context.argument::<JsString>(0) else {
         return context.throw_error("No connection link found.")
     };
     let channel = context.channel();
     let (deferred, promise) = context.promise();
     let connection_link = connection_link_js.value(&mut context);
-
+    let rt = RUNTIME.get().unwrap();
     rt.spawn(async move {
         let connection_result = SqlitePool::connect(&connection_link).await;
         deferred.settle_with(&channel, move |mut context| {
@@ -42,6 +51,9 @@ fn connect(mut context: FunctionContext) -> JsResult<JsPromise> {
 }
 
 fn execute(mut context: FunctionContext) -> JsResult<JsPromise> {
+    if CONNECTION.get().is_none() {
+        return context.throw_error("Connection to database has not been initalized, please call connect() method before execute.");
+    };
     let channel = context.channel();
     let (deferred, promise) = context.promise();
     let Ok(sql_js) = context.argument::<JsString>(0) else {
@@ -59,14 +71,20 @@ fn execute(mut context: FunctionContext) -> JsResult<JsPromise> {
                     let object = context.empty_object();
                     (0..column_len).for_each(|index| {
                         let column = context.string(row.column(index).name());
-                        let field = if let Ok(i32_value) = row.try_get::<i32, usize>(index) {
-                            context.number(i32_value).as_value(&mut context)
+                        let field = if let Ok(option_i32_value) =
+                            row.try_get::<Option<i32>, usize>(index)
+                        {
+                            if let Some(i32_value) = option_i32_value {
+                                context.number(i32_value).as_value(&mut context)
+                            } else {
+                                context.null().as_value(&mut context)
+                            }
                         } else if let Ok(f64_value) = row.try_get::<f64, usize>(index) {
                             context.number(f64_value).as_value(&mut context)
                         } else if let Ok(string_value) = row.try_get::<&str, usize>(index) {
                             context.string(string_value).as_value(&mut context)
                         } else {
-                            context.null().as_value(&mut context)
+                            context.undefined().as_value(&mut context)
                         };
                         object.set(&mut context, column, field).unwrap();
                     });
