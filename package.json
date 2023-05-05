@@ -12,7 +12,7 @@
     },
     "author": "Ming Chang <mail@mingchang.tw> (https://mingchang.tw)",
     "homepage": "https://github.com/ming900518/rusty-sqlite3",
-    "license": "ISC",
+    "license": "MIT",
     "devDependencies": {
         "cargo-cp-artifact": "^0.1.8"
     }
