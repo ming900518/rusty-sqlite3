@@ -36,7 +36,7 @@ Create a new connection with a database file, or open an in memory SQLite3 datab
 2. Open an in memory SQLite3 database.
 
     ```javascript
-    > await rustSqlite3.connect("sqlite://database.sqlite")
+    > await rustSqlite3.connect("sqlite://:memory:")
     true
     ```
 
