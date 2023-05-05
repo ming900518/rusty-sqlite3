@@ -2,7 +2,7 @@
 
 A SQLite3 Client built with Rust Library [SQLx](https://github.com/launchbadge/sqlx) and [Neon](https://neon-bindings.com/).
 
-## Installing rusty-sqlite3
+## Install
 
 Installing rusty-sqlite3 requires [Rust Programming Language](https://rustup.rs/) installed in your device.
 
@@ -48,7 +48,15 @@ Execute the provided SQL. Returns the query result with an array of object.
 
 #### Example
 
-    ```javascript
-    > await rustSqlite3.execute("select sqlite_version()")
-    [ { 'sqlite_version()': '3.38.2' } ]
-    ```
+```javascript
+> await rustSqlite3.execute("select sqlite_version()")
+[ { 'sqlite_version()': '3.38.2' } ]
+> await rustSqlite3.execute("create table test (id int, value varchar)")
+[]
+> await rustSqlite3.execute("insert into test (id, value) values (?, ?) returning *", [1, "value"])
+[ { id: 1, value: 'value' } ]
+> await rustSqlite3.execute("insert into test (id, value) values (?, ?) returning *", [2, null])
+[ { id: 2, value: null } ]
+> await rustSqlite3.execute("select * from test")
+[ { id: 1, value: 'value' }, { id: 2, value: null } ]
+```
