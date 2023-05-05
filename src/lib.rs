@@ -75,10 +75,14 @@ fn execute(mut context: FunctionContext) -> JsResult<JsPromise> {
             .unwrap()
             .into_iter()
             .map(|js_value| {
-                let js_string = js_value.to_string(&mut context).unwrap();
-                js_string.value(&mut context)
+                if js_value.downcast::<JsNull, _>(&mut context).is_ok() {
+                    None
+                } else {
+                    let js_string = js_value.to_string(&mut context).unwrap();
+                    Some(js_string.value(&mut context))
+                }
             })
-            .collect::<Vec<String>>();
+            .collect::<Vec<Option<String>>>();
         Some(vec)
     } else {
         None
@@ -107,20 +111,10 @@ fn execute(mut context: FunctionContext) -> JsResult<JsPromise> {
                             } else {
                                 context.null().as_value(&mut context)
                             }
-                        } else if let Ok(option_f64_value) =
-                            row.try_get::<Option<f64>, usize>(index)
-                        {
-                            if let Some(f64_value) = option_f64_value {
-                                context.number(f64_value).as_value(&mut context)
-                            } else {
-                                context.null().as_value(&mut context)
-                            }
+                        } else if let Ok(f64_value) = row.try_get::<f64, usize>(index) {
+                            context.number(f64_value).as_value(&mut context)
                         } else if let Ok(string_value) = row.try_get::<&str, usize>(index) {
-                            if string_value != "null" {
-                                context.string(string_value).as_value(&mut context)
-                            } else {
-                                context.null().as_value(&mut context)
-                            }
+                            context.string(string_value).as_value(&mut context)
                         } else {
                             context.undefined().as_value(&mut context)
                         };
