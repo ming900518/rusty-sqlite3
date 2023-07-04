@@ -1,6 +1,6 @@
 [package]
 name = "rusty-sqlite3"
-version = "0.4.2"
+version = "0.5.0"
 license = "MIT"
 edition = "2021"
 authors = ["Ming Chang <mail@mingchang.tw>"]
@@ -14,7 +14,7 @@ crate-type = ["cdylib"]
 once_cell = "*"
 serde = { version = "*", features = ["derive"]}
 time = { version = "*", features = ["serde-human-readable", "macros"]}
-tokio = { version = "*", features = ["macros", "rt"]}
+tokio = { version = "*", features = ["macros", "rt-multi-thread"]}
 sqlx = { version = "*", features = ["runtime-tokio-rustls", "time", "sqlite"]}
 
 [dependencies.neon]

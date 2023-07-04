@@ -1,8 +1,8 @@
 {
     "name": "rusty-sqlite3",
-    "version": "0.4.2",
+    "version": "0.5.0",
     "description": "",
-    "main": "index.node",
+    "main": "index.mjs",
     "scripts": {
         "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
         "build-debug": "npm run build --",

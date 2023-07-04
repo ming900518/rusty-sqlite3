@@ -29,14 +29,14 @@ Create a new connection with a database file, or open an in memory SQLite3 datab
 1. Open a database file.
 
     ```javascript
-    > await rustSqlite3.connect("sqlite://database.sqlite")
+    > await rustySqlite3.connect("sqlite://database.sqlite")
     true
     ```
 
 2. Open an in memory SQLite3 database.
 
     ```javascript
-    > await rustSqlite3.connect("sqlite://:memory:")
+    > await rustySqlite3.connect("sqlite://:memory:")
     true
     ```
 
@@ -49,14 +49,14 @@ Execute the provided SQL. Returns the query result with an array of object.
 #### Example
 
 ```javascript
-> await rustSqlite3.execute("select sqlite_version()")
+> await rustySqlite3.execute("select sqlite_version()")
 [ { 'sqlite_version()': '3.38.2' } ]
 > await rustSqlite3.execute("create table test (id int, value varchar)")
 []
-> await rustSqlite3.execute("insert into test (id, value) values (?, ?) returning *", [1, "value"])
+> await rustySqlite3.execute("insert into test (id, value) values (?, ?) returning *", [1, "value"])
 [ { id: 1, value: 'value' } ]
-> await rustSqlite3.execute("insert into test (id, value) values (?, ?) returning *", [2, null])
+> await rustySqlite3.execute("insert into test (id, value) values (?, ?) returning *", [2, null])
 [ { id: 2, value: null } ]
-> await rustSqlite3.execute("select * from test")
+> await rustySqlite3.execute("select * from test")
 [ { id: 1, value: 'value' }, { id: 2, value: null } ]
 ```
