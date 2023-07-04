@@ -1,3 +1,2 @@
-import rustySqlite3 from "./index.cjs";
-
-export const rustySqlite3 = rustySqlite3;
+import { createRequire } from "module";
+export default createRequire(import.meta.url)("./index.node");
